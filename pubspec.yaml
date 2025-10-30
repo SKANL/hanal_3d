@@ -9,7 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  ar_flutter_plugin: ^0.7.3
+  ar_flutter_plugin_updated: ^0.0.1
+  path_provider: ^2.0.0
+  vector_math: ^2.1.0
 
 dev_dependencies:
   flutter_test:
@@ -18,3 +20,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  
+  assets:
+    - assets/altar_de_dia_de_muertos.glb
+    - assets/dia_de_los_muertos.glb
+    - assets/dia_de_los_muertos_katrina_mexico.glb
+    - assets/papel_picado.glb
+    - assets/skull_dia_de_muertos.glb
