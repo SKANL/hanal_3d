@@ -1,0 +1,80 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IDE / Editor
+# JetBrains IDEs
+*.iml
+.idea/
+
+# VS Code workspace settings (uncomment to include personal workspace settings)
+# .vscode/
+
+# Backup / swap
+*~
+
+# Flutter / Dart / Pub
+# Generated outputs and tool state
+.dart_tool/
+/.packages
+/.flutter-plugins
+/.flutter-plugins-dependencies
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.pub/
+.pub-cache/
+/build/
+/coverage/
+
+# Symbolication / obfuscation
+app.*.symbols
+app.*.map.json
+
+# Android / Gradle
+/.gradle
+/android/.gradle
+/android/local.properties
+/local.properties
+**/captures/
+**/outputs/
+**/generated/
+
+# Keep Android signing keys and keystores out of the repo
+**/*.keystore
+**/*.jks
+
+# iOS
+Pods/
+DerivedData/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/engine/Flutter.framework
+
+# Windows
+windows/flutter/generated_plugin_registrant.*
+windows/runner/Release/
+windows/runner/Debug/
+
+# macOS
+macos/Flutter/GeneratedPluginRegistrant.*
+
+# Linux
+linux/flutter/ephemeral/
+
+# Misc: ignore OS files
+.DS_Store
+Thumbs.db
+
+# Note about pubspec.lock
+# For apps, it's recommended to commit pubspec.lock so collaborators and CI use
+# the same package versions. If this is a package, you may want to ignore it.
