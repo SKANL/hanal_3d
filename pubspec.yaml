@@ -23,7 +23,15 @@ flutter:
   
   assets:
     - assets/altar_de_dia_de_muertos.glb
+    - assets/altar_del_dia_de_muertos_robin_williams.glb
+    - assets/calaveras.glb
+    - assets/candelabro-2-velas.glb
     - assets/dia_de_los_muertos.glb
     - assets/dia_de_los_muertos_katrina_mexico.glb
+    - assets/flor_de_calavera.glb
+    - assets/pan_de_muerto.glb
     - assets/papel_picado.glb
+    - assets/porta_velas_artesanal_ceramica.glb
+    - assets/ribeye.glb
     - assets/skull_dia_de_muertos.glb
+    - assets/vasija_estilo_cortezo_proyeccion.glb

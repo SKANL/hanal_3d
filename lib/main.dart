@@ -12,10 +12,15 @@ import 'package:ar_flutter_plugin_updated/models/ar_node.dart';
 import 'package:ar_flutter_plugin_updated/widgets/ar_view.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 import 'dart:io';
-import 'package:flutter/services.dart' show rootBundle;
+import 'dart:math';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Fullscreen immersive mode (hides system bars). Use immersiveSticky if you
+  // prefer the bars to reappear briefly on swipe.
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
   runApp(const MainApp());
 }
 
@@ -25,6 +30,7 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Hanal 3D - AR Día de Muertos',
       theme: ThemeData(
         primarySwatch: Colors.deepOrange,
@@ -128,12 +134,32 @@ class _ARScreenState extends State<ARScreen> {
 
   List<ARNode> nodes = [];
   int currentModelIndex = 0;
+  String? selectedNodeName;
+  bool gesturesEnabledForSelected = true;
+  
+  // Scale and rotation controls for selected node
+  double selectedNodeScale = 0.2;
+  double selectedNodeRotationX = 0.0;
+  double selectedNodeRotationY = 0.0;
+  double selectedNodeRotationZ = 0.0;
 
   // Lista de modelos 3D disponibles
   final List<Map<String, String>> models = [
     {
       'name': 'Altar',
       'path': 'assets/altar_de_dia_de_muertos.glb',
+    },
+    {
+      'name': 'Altar Robin Williams',
+      'path': 'assets/altar_del_dia_de_muertos_robin_williams.glb',
+    },
+    {
+      'name': 'Calaveras',
+      'path': 'assets/calaveras.glb',
+    },
+    {
+      'name': 'Candelabro 2 Velas',
+      'path': 'assets/candelabro-2-velas.glb',
     },
     {
       'name': 'Día de Muertos',
@@ -144,12 +170,32 @@ class _ARScreenState extends State<ARScreen> {
       'path': 'assets/dia_de_los_muertos_katrina_mexico.glb',
     },
     {
+      'name': 'Flor de Calavera',
+      'path': 'assets/flor_de_calavera.glb',
+    },
+    {
+      'name': 'Pan de Muerto',
+      'path': 'assets/pan_de_muerto.glb',
+    },
+    {
       'name': 'Papel Picado',
       'path': 'assets/papel_picado.glb',
     },
     {
+      'name': 'Porta Velas Cerámica',
+      'path': 'assets/porta_velas_artesanal_ceramica.glb',
+    },
+    {
+      'name': 'Ribeye',
+      'path': 'assets/ribeye.glb',
+    },
+    {
       'name': 'Calavera',
       'path': 'assets/skull_dia_de_muertos.glb',
+    },
+    {
+      'name': 'Vasija Corteza',
+      'path': 'assets/vasija_estilo_cortezo_proyeccion.glb',
     },
   ];
 
@@ -238,6 +284,175 @@ class _ARScreenState extends State<ARScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 12),
+                // Per-node controls (visible when a node is selected)
+                if (selectedNodeName != null)
+                  Card(
+                    color: Colors.black87,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        children: [
+                          Text('Seleccionado: $selectedNodeName', 
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 12),
+                          
+                          // Scale slider
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Escala: ${selectedNodeScale.toStringAsFixed(2)}',
+                                style: const TextStyle(fontSize: 14)),
+                              Slider(
+                                value: selectedNodeScale,
+                                min: 0.05,
+                                max: 1.0,
+                                divisions: 95,
+                                onChanged: (value) {
+                                  setState(() {
+                                    selectedNodeScale = value;
+                                  });
+                                  _updateSelectedNodeTransform();
+                                },
+                              ),
+                            ],
+                          ),
+                          
+                          const SizedBox(height: 8),
+                          const Divider(),
+                          const SizedBox(height: 8),
+                          
+                          // Rotation sliders
+                          const Text('Rotación', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          
+                          // Rotation X
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Eje X: ${(selectedNodeRotationX * 180 / 3.14159).toStringAsFixed(0)}°',
+                                style: const TextStyle(fontSize: 12)),
+                              Slider(
+                                value: selectedNodeRotationX,
+                                min: -3.14159,
+                                max: 3.14159,
+                                onChanged: (value) {
+                                  setState(() {
+                                    selectedNodeRotationX = value;
+                                  });
+                                  _updateSelectedNodeTransform();
+                                },
+                              ),
+                            ],
+                          ),
+                          
+                          // Rotation Y
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Eje Y: ${(selectedNodeRotationY * 180 / 3.14159).toStringAsFixed(0)}°',
+                                style: const TextStyle(fontSize: 12)),
+                              Slider(
+                                value: selectedNodeRotationY,
+                                min: -3.14159,
+                                max: 3.14159,
+                                onChanged: (value) {
+                                  setState(() {
+                                    selectedNodeRotationY = value;
+                                  });
+                                  _updateSelectedNodeTransform();
+                                },
+                              ),
+                            ],
+                          ),
+                          
+                          // Rotation Z
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Eje Z: ${(selectedNodeRotationZ * 180 / 3.14159).toStringAsFixed(0)}°',
+                                style: const TextStyle(fontSize: 12)),
+                              Slider(
+                                value: selectedNodeRotationZ,
+                                min: -3.14159,
+                                max: 3.14159,
+                                onChanged: (value) {
+                                  setState(() {
+                                    selectedNodeRotationZ = value;
+                                  });
+                                  _updateSelectedNodeTransform();
+                                },
+                              ),
+                            ],
+                          ),
+                          
+                          const SizedBox(height: 12),
+                          const Divider(),
+                          const SizedBox(height: 8),
+                          
+                          Row(
+                            children: [
+                              const Text('Gestos táctiles'),
+                              const Spacer(),
+                              Switch(
+                                value: gesturesEnabledForSelected,
+                                onChanged: (v) {
+                                  setState(() {
+                                    gesturesEnabledForSelected = v;
+                                  });
+                                },
+                              )
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  // Remove selected node safely
+                                  if (selectedNodeName == null) return;
+                                  
+                                  final nodeToRemove = selectedNodeName;
+                                  setState(() {
+                                    selectedNodeName = null;
+                                  });
+                                  
+                                  try {
+                                    final node = nodes.firstWhere(
+                                      (n) => n.name == nodeToRemove,
+                                      orElse: () => throw StateError('Node not found'),
+                                    );
+                                    await arObjectManager?.removeNode(node);
+                                    setState(() {
+                                      nodes.removeWhere((n) => n.name == nodeToRemove);
+                                    });
+                                    print('Node removed: $nodeToRemove');
+                                  } catch (e) {
+                                    print('Error removing node: $e');
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                ),
+                                child: const Text('Eliminar'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    selectedNodeName = null;
+                                  });
+                                },
+                                child: const Text('Deseleccionar'),
+                              ),
+                            ),
+                          ])
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -272,6 +487,7 @@ class _ARScreenState extends State<ARScreen> {
     this.arObjectManager!.onRotationStart = onRotationStarted;
     this.arObjectManager!.onRotationChange = onRotationChanged;
     this.arObjectManager!.onRotationEnd = onRotationEnded;
+    this.arObjectManager!.onNodeTap = onNodeTapped;
   }
 
   Future<void> onPlaneOrPointTapped(List<ARHitTestResult> hitTestResults) async {
@@ -322,29 +538,65 @@ class _ARScreenState extends State<ARScreen> {
     }
   }
 
+  // Called when the user taps a node in the AR scene
+  Future<void> onNodeTapped(List<String> nodeNames) async {
+    if (nodeNames.isEmpty) return;
+    final tapped = nodeNames.first;
+    setState(() {
+      if (selectedNodeName == tapped) {
+        // toggle selection off if tapped again
+        selectedNodeName = null;
+      } else {
+        selectedNodeName = tapped;
+        // Load current node's transform values
+        try {
+          final node = nodes.firstWhere((n) => n.name == tapped);
+          // Extract scale from the node's scale vector
+          selectedNodeScale = node.scale.x; // Assuming uniform scale
+          
+          // Reset rotation sliders to 0 when selecting a new node
+          // (tracking rotation from Matrix3 is complex, start fresh)
+          selectedNodeRotationX = 0.0;
+          selectedNodeRotationY = 0.0;
+          selectedNodeRotationZ = 0.0;
+        } catch (e) {
+          print('Error loading node transform: $e');
+        }
+      }
+    });
+    print('Node tapped: $tapped (selected: $selectedNodeName)');
+  }
+
   onPanStarted(String nodeName) {
+    // Only allow panning if this node is selected (individual control)
+    if (selectedNodeName == null || selectedNodeName != nodeName || !gesturesEnabledForSelected) return;
     print("Started panning node $nodeName");
   }
 
   onPanChanged(String nodeName) {
+    if (selectedNodeName == null || selectedNodeName != nodeName || !gesturesEnabledForSelected) return;
     print("Continued panning node $nodeName");
   }
 
   onPanEnded(String nodeName, Matrix4 newTransform) {
+    if (selectedNodeName == null || selectedNodeName != nodeName || !gesturesEnabledForSelected) return;
     print("Ended panning node $nodeName");
     final pannedNode = nodes.firstWhere((element) => element.name == nodeName);
     pannedNode.transform = newTransform;
   }
 
   onRotationStarted(String nodeName) {
+    if (selectedNodeName == null || selectedNodeName != nodeName || !gesturesEnabledForSelected) return;
     print("Started rotating node $nodeName");
   }
 
   onRotationChanged(String nodeName) {
+    if (selectedNodeName == null || selectedNodeName != nodeName || !gesturesEnabledForSelected) return;
     print("Continued rotating node $nodeName");
   }
 
   onRotationEnded(String nodeName, Matrix4 newTransform) {
+    if (selectedNodeName == null || selectedNodeName != nodeName || !gesturesEnabledForSelected) return;
     print("Ended rotating node $nodeName");
     final rotatedNode = nodes.firstWhere((element) => element.name == nodeName);
     rotatedNode.transform = newTransform;
@@ -375,6 +627,58 @@ class _ARScreenState extends State<ARScreen> {
     
     // Return just the filename (the plugin will look in the documents folder)
     return filename;
+  }
+
+  /// Updates the transform (scale and rotation) of the currently selected node
+  Future<void> _updateSelectedNodeTransform() async {
+    if (selectedNodeName == null) return;
+    
+    try {
+      final node = nodes.firstWhere(
+        (n) => n.name == selectedNodeName,
+        orElse: () => throw StateError('Node not found: $selectedNodeName'),
+      );
+      
+      // Update scale
+      node.scale = vector.Vector3(selectedNodeScale, selectedNodeScale, selectedNodeScale);
+      
+      // Create rotation matrix from euler angles
+      final rotMatrix = _eulerToRotationMatrix(selectedNodeRotationX, selectedNodeRotationY, selectedNodeRotationZ);
+      node.rotation = rotMatrix;
+      
+      // Apply the transform to the AR scene
+      // Note: The plugin will automatically update the visual representation
+      print('Updated transform for $selectedNodeName - Scale: $selectedNodeScale, Rotation: ($selectedNodeRotationX, $selectedNodeRotationY, $selectedNodeRotationZ)');
+      
+    } catch (e) {
+      print('Error updating node transform: $e');
+      // If node doesn't exist, deselect it
+      if (mounted) {
+        setState(() {
+          selectedNodeName = null;
+        });
+      }
+    }
+  }
+
+  /// Converts euler angles (radians) to rotation matrix
+  vector.Matrix3 _eulerToRotationMatrix(double x, double y, double z) {
+    // Rotation matrix for X axis
+    final cx = cos(x);
+    final sx = sin(x);
+    // Rotation matrix for Y axis
+    final cy = cos(y);
+    final sy = sin(y);
+    // Rotation matrix for Z axis
+    final cz = cos(z);
+    final sz = sin(z);
+
+    // Combined rotation matrix (ZYX order)
+    return vector.Matrix3(
+      cy * cz, -cy * sz, sy,
+      sx * sy * cz + cx * sz, -sx * sy * sz + cx * cz, -sx * cy,
+      -cx * sy * cz + sx * sz, cx * sy * sz + sx * cz, cx * cy,
+    );
   }
 
   Future<void> _removeAllObjects() async {
